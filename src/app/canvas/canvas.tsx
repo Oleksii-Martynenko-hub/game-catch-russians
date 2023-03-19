@@ -46,12 +46,31 @@ const Canvas: FC<CanvasProps> = (props) => {
 
   const anim = (timeStamp: number) => {
     if (player && world) {
-      // console.log('player: ', player.Position);
+      world.updateTimes(timeStamp);
+      world.drawGameBoard();
+      world.drawFps();
+      player.drawPlayer();
     }
     requestAnimationFrame(anim);
   };
 
-  return <CanvasStyled ref={canvasRef}></CanvasStyled>;
+  const setPlayerDestinationOnMouseMove = (
+    e: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) => {
+    if (player) {
+      player.Position = {
+        x: e.clientX,
+        y: e.clientY - e.currentTarget.offsetTop,
+      };
+    }
+  };
+
+  return (
+    <CanvasStyled
+      ref={canvasRef}
+      onMouseMove={setPlayerDestinationOnMouseMove}
+    ></CanvasStyled>
+  );
 };
 
 export default Canvas;
