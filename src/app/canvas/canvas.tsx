@@ -1,5 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
+
 import styled from 'styled-components';
+
 import { Player } from '../game-objects/player';
 import { World } from '../game-objects/world';
 
@@ -49,6 +51,7 @@ const Canvas: FC<CanvasProps> = (props) => {
       world.updateTimes(timeStamp);
       world.drawGameBoard();
       world.drawFps();
+      player.updatePlayerState(world.deltaTime);
       player.drawPlayer();
     }
     requestAnimationFrame(anim);
@@ -58,7 +61,7 @@ const Canvas: FC<CanvasProps> = (props) => {
     e: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => {
     if (player) {
-      player.Position = {
+      player.Destination = {
         x: e.clientX,
         y: e.clientY - e.currentTarget.offsetTop,
       };
