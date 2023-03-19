@@ -31,4 +31,22 @@ export class World {
   get Player() {
     return this.player;
   }
+
+  updateTimes(timeStamp: number) {
+    this.deltaTime = (timeStamp - this.lastTimeStamp) / 1000;
+    this.lastTimeStamp = timeStamp;
+  }
+
+  drawGameBoard() {
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+  }
+
+  drawFps() {
+    const fps = Math.round(1 / this.deltaTime);
+
+    this.ctx.font = '20px Arial';
+    this.ctx.fillStyle = fps > 45 ? 'green' : fps > 25 ? 'blue' : 'red';
+    this.ctx.fillText('FPS: ' + fps, 8, 22);
+  }
 }
