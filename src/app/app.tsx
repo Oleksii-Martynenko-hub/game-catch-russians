@@ -1,15 +1,20 @@
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
+import Canvas from './canvas/canvas';
 
-import NxWelcome from './nx-welcome';
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin: 0;
 
-const StyledApp = styled.div`
-  // Your style here
+  }
 `;
+
+const StyledApp = styled.div``;
 
 export function App() {
   return (
     <StyledApp>
-      <NxWelcome title="balls-v2" />
+      <GlobalStyle />
+      <Canvas />
     </StyledApp>
   );
 }
