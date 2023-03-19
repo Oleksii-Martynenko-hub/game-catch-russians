@@ -30,7 +30,7 @@ export class Player {
   loadImage() {
     if (!Player.sprite) {
       Player.sprite = new Image();
-      Player.sprite.src = './images/player/player1.png';
+      Player.sprite.src = '../images/player/player1.png';
     }
   }
 
