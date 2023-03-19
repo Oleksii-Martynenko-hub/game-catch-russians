@@ -1,5 +1,6 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Player } from '../game-objects/player';
 import { World } from '../game-objects/world';
 
 /* eslint-disable-next-line */
@@ -13,6 +14,7 @@ const CanvasStyled = styled.canvas`
 
 const Canvas: FC<CanvasProps> = (props) => {
   const [world, setWorld] = useState<World | null>(null);
+  const [player, setPlayer] = useState<Player | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -25,10 +27,11 @@ const Canvas: FC<CanvasProps> = (props) => {
           context,
           (canvasRef.current.width = canvasRef.current.clientWidth),
           (canvasRef.current.height = canvasRef.current.clientHeight),
-          { id: 'sup_player_765', name: 'Oleksii_Game' }
+          'Oleksii_Game'
         );
 
         setWorld(world);
+        setPlayer(world.Player);
 
         setIsLoaded(true);
       }
@@ -42,7 +45,9 @@ const Canvas: FC<CanvasProps> = (props) => {
   }, [isLoaded]);
 
   const anim = (timeStamp: number) => {
-    console.log('player: ', world?.player.name);
+    if (player && world) {
+      // console.log('player: ', player.Position);
+    }
     requestAnimationFrame(anim);
   };
 

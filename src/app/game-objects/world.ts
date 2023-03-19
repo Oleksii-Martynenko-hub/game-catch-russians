@@ -1,3 +1,5 @@
+import { Player } from './player';
+
 export class World {
   readonly ctx: CanvasRenderingContext2D;
   readonly width: number;
@@ -12,20 +14,21 @@ export class World {
 
   enemies = [];
 
-  readonly player: {
-    name: string;
-    id: string;
-  };
+  readonly player: Player;
 
   constructor(
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number,
-    player: { name: string; id: string }
+    playerName: string
   ) {
     this.ctx = ctx;
     this.width = width;
     this.height = height;
-    this.player = player;
+    this.player = new Player(this.ctx, playerName);
+  }
+
+  get Player() {
+    return this.player;
   }
 }
