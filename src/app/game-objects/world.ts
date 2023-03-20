@@ -1,3 +1,4 @@
+import { Enemy } from './enemy';
 import { Player } from './player';
 
 export class World {
@@ -11,8 +12,9 @@ export class World {
   lastTimeStamp = 0;
   deltaTime = 0;
   score = 0;
+  enemyQuantity = 50;
 
-  enemies = [];
+  enemies: Enemy[];
 
   readonly player: Player;
 
@@ -26,10 +28,49 @@ export class World {
     this.width = width;
     this.height = height;
     this.player = new Player(this.ctx, playerName);
+    const { rows, cols } = World.getRowsCols(this.enemyQuantity);
+    this.enemies = [...Array(this.enemyQuantity).keys()].map(
+      (i) => new Enemy(this.ctx, width, height, cols, rows, i + 1)
+    );
   }
 
   get Player() {
     return this.player;
+  }
+
+  static getRowsCols = (num: number) => {
+    let rows = Math.floor(Math.sqrt(num));
+    const rest = num - rows ** 2;
+    const cols = rest > 0 ? rows + 1 : rows;
+    rows = rest > rows ? rows + 1 : rows;
+
+    return { rows, cols };
+  };
+
+  static getDistanceBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
+    return Math.hypot(
+      c1.Position.x - c2.Position.x,
+      c1.Position.y - c2.Position.y
+    );
+  }
+
+  static checkCollisionBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
+    const distance = World.getDistanceBetweenCircles(c1, c2);
+
+    return distance <= c1.radius + c2.radius;
+  }
+
+  static getDistanceCircleToSquare(c1: Player | Enemy, c2: Player | Enemy) {
+    return Math.hypot(
+      c1.Position.x - c2.Position.x,
+      c1.Position.y - c2.Position.y
+    );
+  }
+
+  static checkCollisionCircleToSquare(c1: Player | Enemy, c2: Player | Enemy) {
+    const distance = World.getDistanceBetweenCircles(c1, c2);
+
+    return distance <= c1.radius + c2.radius;
   }
 
   updateTimes(timeStamp: number) {

@@ -51,6 +51,29 @@ const Canvas: FC<CanvasProps> = (props) => {
       world.updateTimes(timeStamp);
       world.drawGameBoard();
       world.drawFps();
+
+      world.enemies.forEach((enemy, i) => {
+        enemy.updateEnemyState(world.deltaTime);
+        enemy.wallsCollisionHandler(world.width, world.height);
+
+        let obj2 = world.enemies[0];
+        for (let j = i + 1; j < world.enemies.length; j++) {
+          obj2 = world.enemies[j];
+
+          const isCollidingWithEnemy = World.checkCollisionBetweenCircles(
+            enemy,
+            obj2
+          );
+
+          if (isCollidingWithEnemy) {
+            enemy.enemyCollisionHandler(obj2);
+          }
+        }
+
+        enemy.drawEnemy();
+      });
+
+
       player.updatePlayerState(world.deltaTime);
       player.drawPlayer();
     }

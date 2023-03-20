@@ -1,7 +1,7 @@
 import { drawCircle } from '../utils/drawCircle';
 import { radiansToDegrees } from '../utils/radiansToDegrees';
 
-type Point = { x: number; y: number };
+export type Point = { x: number; y: number };
 
 export class Player {
   readonly ctx: CanvasRenderingContext2D;
@@ -14,7 +14,7 @@ export class Player {
   protected destination: Point = { x: 0, y: 0 };
   protected velocity: Point = { x: 0, y: 0 };
 
-  protected radius = 16;
+  readonly radius = 25;
   protected angle = 0; // angle in radians
   protected speed = 70;
   protected distanceToDestination = 0;
@@ -30,7 +30,7 @@ export class Player {
   loadImage() {
     if (!Player.sprite) {
       Player.sprite = new Image();
-      Player.sprite.src = './images/player/player1.png';
+      Player.sprite.src = 'src/assets/images/player/player1.png';
     }
   }
 

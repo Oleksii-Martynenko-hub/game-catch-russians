@@ -12,7 +12,8 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-is": "18.2.0",
-    "styled-components": "5.3.6"
+    "styled-components": "5.3.6",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@nrwl/cypress": "15.8.7",
@@ -29,6 +30,7 @@
     "@types/react-dom": "18.0.11",
     "@types/react-is": "17.0.3",
     "@types/styled-components": "5.1.26",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
     "@vitejs/plugin-react": "^3.0.0",
