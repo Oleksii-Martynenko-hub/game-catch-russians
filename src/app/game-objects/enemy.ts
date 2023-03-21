@@ -1,8 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { getSecondPointInDirection } from '../utils/getSecondPointInDirection';
 import { radiansToDegrees } from '../utils/radiansToDegrees';
 import { random } from '../utils/random';
+
+import { Rect } from './headquarters';
 import { Point } from './player';
+import { World } from './world';
+
+import enemy1ImageUrl from 'src/assets/images/enemy/enemy1.png';
+import enemy2ImageUrl from 'src/assets/images/enemy/enemy2.png';
+import enemy3ImageUrl from 'src/assets/images/enemy/enemy3.png';
 
 export enum EnemySizes {
   SMALL = 20,
@@ -69,10 +77,15 @@ export class Enemy {
     this.mass = (4 / 3) * Math.PI * (this.radius / 10) ** 3;
 
     this.sprite = new Image();
-    this.sprite.src = `src/assets/images/enemy/enemy${this.typeSizeHandler()}.png`;
+    this.sprite.src =
+      this.typeSize() === 1
+        ? enemy1ImageUrl
+        : this.typeSize() === 2
+        ? enemy2ImageUrl
+        : enemy3ImageUrl;
   }
 
-  private typeSizeHandler() {
+  private typeSize() {
     if (this.radius === EnemySizes.SMALL) return 1;
     if (this.radius === EnemySizes.MEDIUM) return 2;
     if (this.radius === EnemySizes.LARGE) return 3;
@@ -144,6 +157,34 @@ export class Enemy {
       this.velocity.y = -Math.abs(this.velocity.y) * restitution;
       this.position.y = height - this.radius;
     }
+  }
+
+  handleCollisionCircleToRect(r: Rect) {
+    const isColliding = World.checkCollisionCircleToRect(this, r);
+    if (!isColliding) return;
+
+    const distance = World.getDistanceCircleToRect(this, r);
+    const { nearestX, nearestY } = World.getNearestCircleToRect(this, r);
+
+    const angleFromNearestToPosition = Math.atan2(
+      nearestY - this.position.y,
+      nearestX - this.position.x
+    );
+
+    if (distance - this.radius < 0) {
+      const newPosition = getSecondPointInDirection(
+        this.position,
+        distance - this.radius,
+        radiansToDegrees(angleFromNearestToPosition)
+      );
+      this.Position = newPosition;
+    }
+
+    const updatedAngle =
+      angleFromNearestToPosition - this.angle + angleFromNearestToPosition;
+
+    this.velocity.x = -Math.cos(updatedAngle) * this.speed;
+    this.velocity.y = -Math.sin(updatedAngle) * this.speed;
   }
 
   enemyCollisionHandler(enemy: Enemy) {
