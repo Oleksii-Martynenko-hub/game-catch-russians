@@ -3,7 +3,7 @@ export const drawCircle = (
   x: number,
   y: number,
   radius: number,
-  fillCircle: boolean = false,
+  fillCircle = false,
   color: string
 ) => {
   ctx.beginPath();
