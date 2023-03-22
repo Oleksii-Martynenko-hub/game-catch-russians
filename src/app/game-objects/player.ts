@@ -1,16 +1,17 @@
 import { drawCircle } from '../utils/drawCircle';
+import { drawRotated } from '../utils/drawRotated';
 import { radiansToDegrees } from '../utils/radiansToDegrees';
+
+import { Sprite } from './sprite';
 
 import playerImageUrl from 'src/assets/images/player/player1.png';
 
 export type Point = { x: number; y: number };
 
 export class Player {
-  readonly ctx: CanvasRenderingContext2D;
   readonly id: string;
-  readonly name: string;
 
-  static sprite: HTMLImageElement;
+  readonly playerImage = new Sprite(playerImageUrl);
 
   protected position: Point = { x: 0, y: 0 };
   protected destination: Point = { x: 0, y: 0 };
@@ -22,27 +23,16 @@ export class Player {
   protected distanceToDestination = 0;
 
   constructor(
-    ctx: CanvasRenderingContext2D,
-    name: string,
+    readonly ctx: CanvasRenderingContext2D,
+    readonly name: string,
     width: number,
     height: number
   ) {
     this.id = 'temp_id_player_765';
-    this.ctx = ctx;
-    this.name = name;
     this.position.x = width / 2;
     this.position.y = height / 2;
     this.destination.x = width / 2;
     this.destination.y = height / 2;
-
-    this.loadImage();
-  }
-
-  loadImage() {
-    if (!Player.sprite) {
-      Player.sprite = new Image();
-      Player.sprite.src = playerImageUrl;
-    }
   }
 
   drawPlayer() {
@@ -63,19 +53,20 @@ export class Player {
       'red'
     );
 
-    this.ctx.translate(this.position.x, this.position.y);
-    this.ctx.rotate((Math.PI / 180) * (radiansToDegrees(this.angle) + 90));
-    this.ctx.translate(-this.position.x, -this.position.y);
-
-    this.ctx.drawImage(
-      Player.sprite,
-      this.position.x - this.radius - this.radius * 0.1,
-      this.position.y - this.radius - this.radius * 0.1,
-      this.radius * 2.2,
-      this.radius * 2.2
+    drawRotated(
+      this.ctx,
+      this.position,
+      radiansToDegrees(this.angle) + 90,
+      () => {
+        this.ctx.drawImage(
+          this.playerImage.sprite,
+          this.position.x - this.radius - this.radius * 0.1,
+          this.position.y - this.radius - this.radius * 0.1,
+          this.radius * 2.2,
+          this.radius * 2.2
+        );
+      }
     );
-
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   updatePosition(deltaTime: number) {

@@ -1,27 +1,16 @@
 import { random } from '../utils/random';
+import { drawText } from '../utils/drawText';
+import { drawRect } from '../utils/drawRect';
 import { getRowsCols } from '../utils/getRowsCols';
-import { getCellByNumber } from '../utils/getCellByNumber';
 
 import { Enemy } from './enemy';
+import { Sprite } from './sprite';
 import { Player, Point } from './player';
 import { Headquarters, Rect } from './headquarters';
 
 import grassSpriteImageUrl from 'src/assets/images/grass_sprite.png';
 
 export class World {
-  readonly ctx: CanvasRenderingContext2D;
-
-  static sprite: HTMLImageElement;
-  static scale = 3;
-  static spriteCols = 6;
-  static spriteRows = 5;
-  static frameWidth = 916 / 6;
-  static frameHeight = 334 / 5;
-  readonly grassFrames: (Point & { frame: number })[];
-
-  readonly width: number;
-  readonly height: number;
-
   isGameOver = false;
   isGameStarted = false;
 
@@ -30,21 +19,19 @@ export class World {
   score = 0;
   enemyQuantity = 5 ** 2 - 1;
 
+  readonly player: Player;
   enemies: Enemy[];
   headquarters: Headquarters[];
 
-  readonly player: Player;
+  readonly grassImage = new Sprite(grassSpriteImageUrl, 5, 6, 3);
+  private grassFrames: (Point & { frame: number })[] = [];
 
   constructor(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
+    readonly ctx: CanvasRenderingContext2D,
+    readonly width: number,
+    readonly height: number,
     playerName: string
   ) {
-    this.ctx = ctx;
-    this.width = width;
-    this.height = height;
-
     this.player = new Player(this.ctx, playerName, width, height);
 
     const { rows, cols } = getRowsCols(this.enemyQuantity);
@@ -53,28 +40,13 @@ export class World {
       (i) =>
         new Enemy(
           this.ctx,
+          i + (i > this.enemyQuantity / 2 - 1 ? 2 : 1),
           width,
           height,
           cols,
-          rows,
-          i + (i > this.enemyQuantity / 2 - 1 ? 2 : 1)
+          rows
         )
     );
-
-    this.grassFrames = [...Array(70).keys()]
-      .map((i) => ({
-        x: random(width, -World.frameWidth / World.scale),
-        y: random(height, -World.frameHeight / (World.scale + 1)),
-      }))
-      .map((place) => {
-        return [...Array(random(100, 60)).keys()].map((i) => ({
-          x: random(place.x - World.frameWidth, place.x + World.frameWidth),
-          y: random(place.y - World.frameHeight, place.y + World.frameHeight),
-          frame: random(World.spriteRows * World.spriteCols, 1),
-        }));
-      })
-      .reduce((a, b) => a.concat(b))
-      .sort((a, b) => a.y - b.y);
 
     const headquarters = [
       { x: width - 70, y: 0, w: 70, h: 70, rotate: 180 },
@@ -86,19 +58,38 @@ export class World {
       ({ rotate, ...rect }, i) =>
         new Headquarters(this.ctx, rect, rotate, i + 1)
     );
-
-    this.loadSprite();
   }
 
-  loadSprite() {
-    if (!World.sprite) {
-      World.sprite = new Image();
-      World.sprite.onload = () => {
-        World.frameWidth = World.sprite.width / World.spriteCols;
-        World.frameHeight = World.sprite.height / World.spriteRows;
-      };
-      World.sprite.src = grassSpriteImageUrl;
-    }
+  generateGrass() {
+    this.grassFrames = [...Array(70).keys()]
+      .map((i) => ({
+        x: random(
+          this.width,
+          -this.grassImage.frameWidth / this.grassImage.scale
+        ),
+        y: random(
+          this.height,
+          -this.grassImage.frameHeight / (this.grassImage.scale + 1)
+        ),
+      }))
+      .map((place) => {
+        return [...Array(random(100, 60)).keys()].map((i) => ({
+          x: random(
+            place.x - this.grassImage.frameWidth,
+            place.x + this.grassImage.frameWidth
+          ),
+          y: random(
+            place.y - this.grassImage.frameHeight,
+            place.y + this.grassImage.frameHeight
+          ),
+          frame: random(
+            this.grassImage.spriteRows * this.grassImage.spriteCols,
+            1
+          ),
+        }));
+      })
+      .reduce((a, b) => a.concat(b))
+      .sort((a, b) => a.y - b.y);
   }
 
   setIsGameStarted() {
@@ -113,44 +104,37 @@ export class World {
   }
 
   drawGameBoard() {
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    this.ctx.fillRect(0, 0, this.width, this.height);
-    this.ctx.fillStyle = 'rgba(211, 189, 132, 1)';
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    if (!this.grassFrames.length && this.grassImage.IsLoaded) {
+      this.generateGrass();
+    }
+
+    drawRect(this.ctx, 0, 0, this.width, this.height, 'rgba(0, 0, 0, 0.2)');
+    drawRect(this.ctx, 0, 0, this.width, this.height, 'rgba(211, 189, 132, 1)');
 
     this.grassFrames.forEach(({ x, y, frame }) => {
-      const { row, col } = getCellByNumber(
-        frame,
-        World.spriteRows,
-        World.spriteCols,
-        true
-      );
+      this.grassImage.setFrame(frame);
+
+      const spriteArgs = this.grassImage.getSpriteArgsToDraw();
 
       this.ctx.drawImage(
-        World.sprite,
-        (col - 1) * World.frameWidth + (col === 1 ? 1 : 4),
-        (row - 1) * World.frameHeight,
-        World.frameWidth,
-        World.frameHeight,
+        this.grassImage.sprite,
+        ...spriteArgs,
         x,
         y,
-        World.frameWidth / World.scale,
-        World.frameHeight / World.scale
+        this.grassImage.frameWidth / this.grassImage.scale,
+        this.grassImage.frameHeight / this.grassImage.scale
       );
     });
 
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    drawRect(this.ctx, 0, 0, this.width, this.height, 'rgba(0, 0, 0, 0.25)');
   }
 
   drawFps() {
     const fps = Math.round(1 / this.deltaTime);
 
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    this.ctx.fillRect(0, 0, 90, 32);
-    this.ctx.font = '20px Arial';
-    this.ctx.fillStyle = fps > 45 ? 'green' : fps > 25 ? 'blue' : 'red';
-    this.ctx.fillText('FPS: ' + fps, 8, 22);
+    drawRect(this.ctx, 0, 0, 90, 32, 'rgba(0, 0, 0, 0.45)');
+
+    drawText(this.ctx, 'FPS: ' + fps, 8, 22, fps > 25 ? 'green' : 'red');
   }
 
   static getDistanceBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {

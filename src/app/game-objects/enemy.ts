@@ -2,15 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { random } from '../utils/random';
 import { drawCircle } from '../utils/drawCircle';
+import { drawRotated } from '../utils/drawRotated';
 import { getCellByNumber } from '../utils/getCellByNumber';
 import { radiansToDegrees } from '../utils/radiansToDegrees';
 import { getSecondPointInDirection } from '../utils/getSecondPointInDirection';
 
 import { World } from './world';
 import { Point } from './player';
+import { Sprite } from './sprite';
 import { Rect } from './headquarters';
 
 import enemySpriteImageUrl from 'src/assets/images/enemy/enemySprite.png';
+import panicSpriteImageUrl from 'src/assets/images/enemy/enemyPanicSprite.png';
 
 export enum EnemySizes {
   SMALL = 20,
@@ -19,17 +22,10 @@ export enum EnemySizes {
 }
 
 export class Enemy {
-  readonly ctx: CanvasRenderingContext2D;
   readonly id: string;
 
-  static spriteCols = 4;
-  static spriteRows = 1;
-  static frameWidth = 591 / 4;
-  static frameHeight = 138 / 1;
-  static sprite: HTMLImageElement;
-
-  protected currentFrame = 0;
-  protected lastUpdateFrameTime = 0;
+  readonly enemyImage = new Sprite(enemySpriteImageUrl, 1, 4);
+  readonly panicImage = new Sprite(panicSpriteImageUrl, 1, 5);
 
   protected position: Point;
   protected velocity: Point;
@@ -37,6 +33,7 @@ export class Enemy {
   readonly radius: number;
   protected angle: number; // angle in radians
   protected speed = 80;
+  private readonly maxSpeed = 200;
 
   // enemy touched the player has red mark
   isKiller = false;
@@ -45,15 +42,14 @@ export class Enemy {
   mass: number;
 
   constructor(
-    ctx: CanvasRenderingContext2D,
+    readonly ctx: CanvasRenderingContext2D,
+    readonly place: number,
     width: number,
     height: number,
     rows: number,
-    cols: number,
-    place: number
+    cols: number
   ) {
     this.id = uuidv4();
-    this.ctx = ctx;
 
     const randomSize = random(99, 1);
     this.radius =
@@ -84,19 +80,6 @@ export class Enemy {
     };
 
     this.mass = (4 / 3) * Math.PI * (this.radius / 10) ** 3;
-
-    this.loadSprite();
-  }
-
-  loadSprite() {
-    if (!Enemy.sprite) {
-      Enemy.sprite = new Image();
-      Enemy.sprite.onload = () => {
-        Enemy.frameWidth = Enemy.sprite.width / Enemy.spriteCols;
-        Enemy.frameHeight = Enemy.sprite.height / Enemy.spriteRows;
-      };
-      Enemy.sprite.src = enemySpriteImageUrl;
-    }
   }
 
   private typeSize() {
@@ -106,23 +89,35 @@ export class Enemy {
   }
 
   drawEnemy() {
-    this.ctx.translate(this.position.x, this.position.y);
-    this.ctx.rotate((Math.PI / 180) * (radiansToDegrees(this.angle) + 0));
-    this.ctx.translate(-this.position.x, -this.position.y);
+    drawRotated(
+      this.ctx,
+      this.position,
+      radiansToDegrees(this.angle) + 0,
+      () => {
+        const spriteArgs = this.enemyImage.getSpriteArgsToDraw();
 
-    this.ctx.drawImage(
-      Enemy.sprite,
-      this.currentFrame * Enemy.frameWidth,
-      0 * Enemy.frameHeight,
-      Enemy.frameWidth,
-      Enemy.frameHeight,
-      this.position.x - this.radius - this.radius * 0.1,
-      this.position.y - this.radius - this.radius * 0.1,
-      this.radius * 2.2,
-      this.radius * 2.2
+        this.ctx.drawImage(
+          this.enemyImage.sprite,
+          ...spriteArgs,
+          this.position.x - this.radius - this.radius * 0.1,
+          this.position.y - this.radius - this.radius * 0.1,
+          this.radius * 2.2,
+          this.radius * 2.2
+        );
+      }
     );
-
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (this.place === 5) {
+      // TODO: temporary condition
+      const panicArgs = this.panicImage.getSpriteArgsToDraw();
+      this.ctx.drawImage(
+        this.panicImage.sprite,
+        ...panicArgs,
+        this.position.x - this.radius,
+        this.position.y - this.radius,
+        this.radius * 2,
+        this.radius * 2
+      );
+    }
 
     if (this.isKiller) {
       drawCircle(this.ctx, this.position.x, this.position.y, 5, true, 'red');
@@ -132,11 +127,8 @@ export class Enemy {
   updateFrame(timeStamp: number, isStarted: boolean) {
     if (!isStarted || this.isKiller) return;
 
-    if (timeStamp - this.lastUpdateFrameTime > 1000 / (this.speed / 10)) {
-      this.currentFrame++;
-      if (this.currentFrame >= Enemy.spriteCols) this.currentFrame = 0;
-      this.lastUpdateFrameTime = timeStamp;
-    }
+    this.enemyImage.nextFrame(timeStamp, 1000 / (this.speed / 10));
+    this.panicImage.nextFrame(timeStamp, 70);
   }
 
   updatePosition(deltaTime: number) {
@@ -145,8 +137,8 @@ export class Enemy {
   }
 
   deceleration() {
-    if (this.speed > 200) {
-      this.speed -= (this.speed - 200) * 0.05;
+    if (this.speed > this.maxSpeed) {
+      this.speed -= (this.speed - this.maxSpeed) * 0.05;
     }
   }
 
