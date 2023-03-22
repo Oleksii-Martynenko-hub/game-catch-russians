@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getSecondPointInDirection } from '../utils/getSecondPointInDirection';
 import { radiansToDegrees } from '../utils/radiansToDegrees';
+import { getCellByNumber } from '../utils/getCellByNumber';
+import { drawCircle } from '../utils/drawCircle';
 import { random } from '../utils/random';
 
 import { Rect } from './headquarters';
@@ -29,7 +31,10 @@ export class Enemy {
 
   readonly radius: number;
   protected angle: number; // angle in radians
-  protected speed = 100;
+  protected speed = 80;
+
+  // enemy touched the player has red mark
+  isKiller = false;
 
   // weight of balls
   mass: number;
@@ -53,8 +58,7 @@ export class Enemy {
         ? EnemySizes.MEDIUM
         : EnemySizes.LARGE;
 
-    const row = place % rows || rows;
-    const col = Math.ceil(place / rows);
+    const { row, col } = getCellByNumber(place, rows, cols, true);
 
     const cellWidth = width / cols;
     const cellHeight = height / rows;
@@ -105,6 +109,10 @@ export class Enemy {
     );
 
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    if (this.isKiller) {
+      drawCircle(this.ctx, this.position.x, this.position.y, 5, true, 'red');
+    }
   }
 
   updatePosition(deltaTime: number) {
@@ -131,7 +139,8 @@ export class Enemy {
     this.velocity.y = Math.sin(this.angle) * this.speed;
   }
 
-  updateEnemyState(deltaTime: number) {
+  updateEnemyState(deltaTime: number, isStarted: boolean) {
+    if (!isStarted || this.isKiller) return;
     this.updateAngle();
     this.updateSpeed();
     this.deceleration();

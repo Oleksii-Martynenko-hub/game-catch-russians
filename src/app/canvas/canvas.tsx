@@ -9,8 +9,11 @@ import { World } from '../game-objects/world';
 export interface CanvasProps {}
 
 const CanvasStyled = styled.canvas`
-  height: 1000px;
-  width: 100%;
+  display: block;
+  height: 100vh;
+  width: 100vh;
+  margin: 0 auto;
+  background: rgb(64, 202, 152);
   cursor: none;
 `;
 
@@ -49,11 +52,12 @@ const Canvas: FC<CanvasProps> = (props) => {
   const anim = (timeStamp: number) => {
     if (player && world) {
       world.updateTimes(timeStamp);
+      world.setIsGameStarted();
       world.drawGameBoard();
       world.drawFps();
 
       world.enemies.forEach((enemy, i) => {
-        enemy.updateEnemyState(world.deltaTime);
+        enemy.updateEnemyState(world.deltaTime, world.isGameStarted);
         enemy.wallsCollisionHandler(world.width, world.height);
 
         world.headquarters.forEach((head) => {
@@ -74,6 +78,17 @@ const Canvas: FC<CanvasProps> = (props) => {
           }
         }
 
+        if (!world.isGameOver) {
+          const isCollidingWithPlayer = World.checkCollisionBetweenCircles(
+            enemy,
+            player
+          );
+          if (isCollidingWithPlayer) {
+            world.isGameOver = true;
+            enemy.isKiller = true;
+          }
+        }
+
         enemy.drawEnemy();
       });
 
@@ -87,8 +102,7 @@ const Canvas: FC<CanvasProps> = (props) => {
         head.drawHeadquarters();
       });
 
-
-      player.updatePlayerState(world.deltaTime);
+      if (!world.isGameOver) player.updatePlayerState(world.deltaTime);
       player.drawPlayer();
     }
     requestAnimationFrame(anim);
@@ -99,7 +113,7 @@ const Canvas: FC<CanvasProps> = (props) => {
   ) => {
     if (player) {
       player.Destination = {
-        x: e.clientX,
+        x: e.clientX - e.currentTarget.offsetLeft,
         y: e.clientY - e.currentTarget.offsetTop,
       };
     }

@@ -21,10 +21,19 @@ export class Player {
   protected speed = 70;
   protected distanceToDestination = 0;
 
-  constructor(ctx: CanvasRenderingContext2D, name: string) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    name: string,
+    width: number,
+    height: number
+  ) {
     this.id = 'temp_id_player_765';
     this.ctx = ctx;
     this.name = name;
+    this.position.x = width / 2;
+    this.position.y = height / 2;
+    this.destination.x = width / 2;
+    this.destination.y = height / 2;
 
     this.loadImage();
   }

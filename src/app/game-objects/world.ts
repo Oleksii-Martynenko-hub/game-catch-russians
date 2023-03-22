@@ -1,19 +1,33 @@
+import { random } from '../utils/random';
+import { getCellByNumber } from '../utils/getCellByNumber';
+
 import { Enemy } from './enemy';
+import { Player, Point } from './player';
 import { Headquarters, Rect } from './headquarters';
-import { Player } from './player';
+
+import grassSpriteImageUrl from 'src/assets/images/grass_sprite.png';
 
 export class World {
   readonly ctx: CanvasRenderingContext2D;
+
+  static sprite: HTMLImageElement;
+  static scale = 3;
+  static spriteCols = 6;
+  static spriteRows = 5;
+  static frameWidth = 916 / 6;
+  static frameHeight = 334 / 5;
+  readonly grassFrames: (Point & { frame: number })[];
+
   readonly width: number;
   readonly height: number;
 
-  private isGameOver = false;
-  private isGameStarted = false;
+  isGameOver = false;
+  isGameStarted = false;
 
   lastTimeStamp = 0;
   deltaTime = 0;
   score = 0;
-  enemyQuantity = 50;
+  enemyQuantity = 48;
 
   enemies: Enemy[];
   headquarters: Headquarters[];
@@ -30,13 +44,29 @@ export class World {
     this.width = width;
     this.height = height;
 
-    this.player = new Player(this.ctx, playerName);
+    this.player = new Player(this.ctx, playerName, width, height);
 
     const { rows, cols } = World.getRowsCols(this.enemyQuantity);
 
     this.enemies = [...Array(this.enemyQuantity).keys()].map(
-      (i) => new Enemy(this.ctx, width, height, cols, rows, i + 1)
+      (i) =>
+        new Enemy(this.ctx, width, height, cols, rows, i + (i > 23 ? 2 : 1))
     );
+
+    this.grassFrames = [...Array(70).keys()]
+      .map((i) => ({
+        x: random(width, -World.frameWidth / World.scale),
+        y: random(height, -World.frameHeight / (World.scale + 1)),
+      }))
+      .map((place) => {
+        return [...Array(random(100, 60)).keys()].map((i) => ({
+          x: random(place.x - World.frameWidth, place.x + World.frameWidth),
+          y: random(place.y - World.frameHeight, place.y + World.frameHeight),
+          frame: random(World.spriteRows * World.spriteCols, 1),
+        }));
+      })
+      .reduce((a, b) => a.concat(b))
+      .sort((a, b) => a.y - b.y);
 
     const headquarters = [
       { x: width - 70, y: 0, w: 70, h: 70, rotate: 180 },
@@ -48,8 +78,26 @@ export class World {
       ({ rotate, ...rect }, i) =>
         new Headquarters(this.ctx, rect, rotate, i + 1)
     );
+
+    this.loadSprite();
   }
 
+  setIsGameStarted() {
+    if (!this.isGameStarted) {
+      if (this.lastTimeStamp > 3000) this.isGameStarted = true;
+    }
+  }
+
+  loadSprite() {
+    if (!World.sprite) {
+      World.sprite = new Image();
+      World.sprite.onload = () => {
+        World.frameWidth = World.sprite.width / World.spriteCols;
+        World.frameHeight = World.sprite.height / World.spriteRows;
+      };
+      World.sprite.src = grassSpriteImageUrl;
+    }
+  }
   get Player() {
     return this.player;
   }
@@ -99,13 +147,41 @@ export class World {
   }
 
   drawGameBoard() {
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ctx.fillStyle = 'rgba(211, 189, 132, 1)';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+
+    this.grassFrames.forEach(({ x, y, frame }) => {
+      const { row, col } = getCellByNumber(
+        frame,
+        World.spriteRows,
+        World.spriteCols,
+        true
+      );
+
+      this.ctx.drawImage(
+        World.sprite,
+        (col - 1) * World.frameWidth + (col === 1 ? 1 : 4),
+        (row - 1) * World.frameHeight,
+        World.frameWidth,
+        World.frameHeight,
+        x,
+        y,
+        World.frameWidth / World.scale,
+        World.frameHeight / World.scale
+      );
+    });
+
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     this.ctx.fillRect(0, 0, this.width, this.height);
   }
 
   drawFps() {
     const fps = Math.round(1 / this.deltaTime);
 
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    this.ctx.fillRect(0, 0, 90, 32);
     this.ctx.font = '20px Arial';
     this.ctx.fillStyle = fps > 45 ? 'green' : fps > 25 ? 'blue' : 'red';
     this.ctx.fillText('FPS: ' + fps, 8, 22);
