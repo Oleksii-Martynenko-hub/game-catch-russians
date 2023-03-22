@@ -10,7 +10,7 @@ export const getCellByNumber = (
     return { row, col };
   }
 
-  const row = place % cols || cols;
-  const col = Math.ceil(place / cols);
+  const col = place % cols || cols;
+  const row = Math.ceil(place / cols);
   return { row, col };
 };
