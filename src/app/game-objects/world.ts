@@ -1,4 +1,5 @@
 import { random } from '../utils/random';
+import { getRowsCols } from '../utils/getRowsCols';
 import { getCellByNumber } from '../utils/getCellByNumber';
 
 import { Enemy } from './enemy';
@@ -27,7 +28,7 @@ export class World {
   lastTimeStamp = 0;
   deltaTime = 0;
   score = 0;
-  enemyQuantity = 48;
+  enemyQuantity = 5 ** 2 - 1;
 
   enemies: Enemy[];
   headquarters: Headquarters[];
@@ -46,11 +47,18 @@ export class World {
 
     this.player = new Player(this.ctx, playerName, width, height);
 
-    const { rows, cols } = World.getRowsCols(this.enemyQuantity);
+    const { rows, cols } = getRowsCols(this.enemyQuantity);
 
     this.enemies = [...Array(this.enemyQuantity).keys()].map(
       (i) =>
-        new Enemy(this.ctx, width, height, cols, rows, i + (i > 23 ? 2 : 1))
+        new Enemy(
+          this.ctx,
+          width,
+          height,
+          cols,
+          rows,
+          i + (i > this.enemyQuantity / 2 - 1 ? 2 : 1)
+        )
     );
 
     this.grassFrames = [...Array(70).keys()]
@@ -82,12 +90,6 @@ export class World {
     this.loadSprite();
   }
 
-  setIsGameStarted() {
-    if (!this.isGameStarted) {
-      if (this.lastTimeStamp > 3000) this.isGameStarted = true;
-    }
-  }
-
   loadSprite() {
     if (!World.sprite) {
       World.sprite = new Image();
@@ -98,47 +100,11 @@ export class World {
       World.sprite.src = grassSpriteImageUrl;
     }
   }
-  get Player() {
-    return this.player;
-  }
 
-  static getRowsCols = (num: number) => {
-    let rows = Math.floor(Math.sqrt(num));
-    const rest = num - rows ** 2;
-    const cols = rest > 0 ? rows + 1 : rows;
-    rows = rest > rows ? rows + 1 : rows;
-
-    return { rows, cols };
-  };
-
-  static getDistanceBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
-    return Math.hypot(
-      c1.Position.x - c2.Position.x,
-      c1.Position.y - c2.Position.y
-    );
-  }
-
-  static checkCollisionBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
-    const distance = World.getDistanceBetweenCircles(c1, c2);
-
-    return distance <= c1.radius + c2.radius;
-  }
-
-  static getNearestCircleToRect(c1: Player | Enemy, r: Rect) {
-    const nearestX = Math.max(r.x, Math.min(c1.Position.x, r.x + r.w));
-    const nearestY = Math.max(r.y, Math.min(c1.Position.y, r.y + r.h));
-    return { nearestX, nearestY };
-  }
-
-  static getDistanceCircleToRect(c1: Player | Enemy, r: Rect) {
-    const { nearestX, nearestY } = World.getNearestCircleToRect(c1, r);
-    return Math.hypot(c1.Position.x - nearestX, c1.Position.y - nearestY);
-  }
-
-  static checkCollisionCircleToRect(c1: Player | Enemy, r: Rect) {
-    const distance = World.getDistanceCircleToRect(c1, r);
-
-    return distance <= c1.radius;
+  setIsGameStarted() {
+    if (!this.isGameStarted) {
+      if (this.lastTimeStamp > 3000) this.isGameStarted = true;
+    }
   }
 
   updateTimes(timeStamp: number) {
@@ -185,5 +151,35 @@ export class World {
     this.ctx.font = '20px Arial';
     this.ctx.fillStyle = fps > 45 ? 'green' : fps > 25 ? 'blue' : 'red';
     this.ctx.fillText('FPS: ' + fps, 8, 22);
+  }
+
+  static getDistanceBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
+    return Math.hypot(
+      c1.Position.x - c2.Position.x,
+      c1.Position.y - c2.Position.y
+    );
+  }
+
+  static checkCollisionBetweenCircles(c1: Player | Enemy, c2: Player | Enemy) {
+    const distance = World.getDistanceBetweenCircles(c1, c2);
+
+    return distance <= c1.radius + c2.radius;
+  }
+
+  static getNearestCircleToRect(c1: Player | Enemy, r: Rect) {
+    const nearestX = Math.max(r.x, Math.min(c1.Position.x, r.x + r.w));
+    const nearestY = Math.max(r.y, Math.min(c1.Position.y, r.y + r.h));
+    return { nearestX, nearestY };
+  }
+
+  static getDistanceCircleToRect(c1: Player | Enemy, r: Rect) {
+    const { nearestX, nearestY } = World.getNearestCircleToRect(c1, r);
+    return Math.hypot(c1.Position.x - nearestX, c1.Position.y - nearestY);
+  }
+
+  static checkCollisionCircleToRect(c1: Player | Enemy, r: Rect) {
+    const distance = World.getDistanceCircleToRect(c1, r);
+
+    return distance <= c1.radius;
   }
 }

@@ -36,7 +36,7 @@ const Canvas: FC<CanvasProps> = (props) => {
         );
 
         setWorld(world);
-        setPlayer(world.Player);
+        setPlayer(world.player);
 
         setIsLoaded(true);
       }
@@ -90,6 +90,7 @@ const Canvas: FC<CanvasProps> = (props) => {
         }
 
         enemy.drawEnemy();
+        enemy.updateFrame(timeStamp, world.isGameStarted);
       });
 
       world.headquarters.forEach((head) => {
