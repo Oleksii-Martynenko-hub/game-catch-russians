@@ -56,6 +56,13 @@ const Canvas: FC<CanvasProps> = (props) => {
       world.drawGameBoard();
       world.drawFps();
 
+      const panicEnemy = world.enemies.find(
+        (enemy) => enemy.panicLevel > 0 && enemy.panicLevel < 3
+      );
+      if (!panicEnemy) {
+        world.makeRandomEnemyPanic();
+      }
+
       world.enemies.forEach((enemy, i) => {
         enemy.updateEnemyState(world.deltaTime, world.isGameStarted);
         enemy.wallsCollisionHandler(world.width, world.height);
@@ -78,14 +85,23 @@ const Canvas: FC<CanvasProps> = (props) => {
           }
         }
 
+        if (enemy.panicLevel === 1) {
+          enemy.increasePanicLevel(world.deltaTime);
+        }
+
         if (!world.isGameOver) {
           const isCollidingWithPlayer = World.checkCollisionBetweenCircles(
             enemy,
             player
           );
           if (isCollidingWithPlayer) {
-            world.isGameOver = true;
-            enemy.isKiller = true;
+            if (enemy.panicLevel < 2) {
+              world.isGameOver = true;
+              enemy.isKiller = true;
+            } else {
+              enemy.panicLevel = 3;
+              enemy.isKiller = true;
+            }
           }
         }
 

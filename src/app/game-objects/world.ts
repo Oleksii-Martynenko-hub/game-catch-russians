@@ -19,6 +19,8 @@ export class World {
   score = 0;
   enemyQuantity = 5 ** 2 - 1;
 
+  timeToMakePanic: number | null = null;
+
   readonly player: Player;
   enemies: Enemy[];
   headquarters: Headquarters[];
@@ -90,6 +92,24 @@ export class World {
       })
       .reduce((a, b) => a.concat(b))
       .sort((a, b) => a.y - b.y);
+  }
+
+  makeRandomEnemyPanic() {
+    if (this.timeToMakePanic === null) {
+      this.timeToMakePanic = random(12, 3);
+      return;
+    }
+
+    if (this.timeToMakePanic > 0) {
+      this.timeToMakePanic -= this.deltaTime;
+      return;
+    }
+
+    this.enemies.filter((e) => !e.isKiller)[
+      random(this.enemies.length - 1)
+    ].panicLevel = 1;
+
+    this.timeToMakePanic = null;
   }
 
   setIsGameStarted() {

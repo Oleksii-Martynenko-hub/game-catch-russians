@@ -15,6 +15,7 @@ import { Rect } from './headquarters';
 import enemySpriteImageUrl from 'src/assets/images/enemy/enemySprite.png';
 import panicSpriteImageUrl from 'src/assets/images/enemy/enemyPanicSprite.png';
 import { Circle } from './circle';
+import { drawText } from '../utils/drawText';
 
 export enum EnemySizes {
   SMALL = 20,
@@ -28,11 +29,12 @@ export class Enemy extends Circle {
 
   private readonly maxSpeed = 200;
 
-  // enemy touched the player has red mark
-  isKiller = false;
+  mass: number; // weight of balls
 
-  // weight of balls
-  mass: number;
+  isKiller = false; // enemy touched the player has red mark
+
+  panicLevel = 0; // when level 1 - animate warning of panic, 2 - is panic and player can catch it
+  timeToIncreasePanic: number | null = null;
 
   constructor(
     readonly ctx: CanvasRenderingContext2D,
@@ -99,8 +101,10 @@ export class Enemy extends Circle {
         );
       }
     );
-    if (this.place === 5) {
-      // TODO: temporary condition
+    if (this.panicLevel === 1) {
+      drawText(this.ctx, 'Panic!?', this.position.x - 10, this.position.y + 12);
+    }
+    if (this.panicLevel === 2) {
       const panicArgs = this.panicImage.getSpriteArgsToDraw();
       this.ctx.drawImage(
         this.panicImage.sprite,
@@ -214,5 +218,21 @@ export class Enemy extends Circle {
       enemy.Velocity.x + impulse * this.mass * vCollisionNorm.x;
     enemy.Velocity.y =
       enemy.Velocity.y + impulse * this.mass * vCollisionNorm.y;
+  }
+
+  increasePanicLevel(deltaTime: number) {
+    if (this.timeToIncreasePanic === null) {
+      this.timeToIncreasePanic = random(5, 2.5, true);
+      return;
+    }
+
+    if (this.timeToIncreasePanic > 0) {
+      this.timeToIncreasePanic -= deltaTime;
+      return;
+    }
+
+    this.panicLevel = 2;
+
+    this.timeToIncreasePanic = null;
   }
 }
