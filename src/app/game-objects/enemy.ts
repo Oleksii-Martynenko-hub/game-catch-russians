@@ -14,6 +14,7 @@ import { Rect } from './headquarters';
 
 import enemySpriteImageUrl from 'src/assets/images/enemy/enemySprite.png';
 import panicSpriteImageUrl from 'src/assets/images/enemy/enemyPanicSprite.png';
+import { Circle } from './circle';
 
 export enum EnemySizes {
   SMALL = 20,
@@ -21,18 +22,10 @@ export enum EnemySizes {
   LARGE = 30,
 }
 
-export class Enemy {
-  readonly id: string;
-
+export class Enemy extends Circle {
   readonly enemyImage = new Sprite(enemySpriteImageUrl, 1, 4);
   readonly panicImage = new Sprite(panicSpriteImageUrl, 1, 5);
 
-  protected position: Point;
-  protected velocity: Point;
-
-  readonly radius: number;
-  protected angle: number; // angle in radians
-  protected speed = 80;
   private readonly maxSpeed = 200;
 
   // enemy touched the player has red mark
@@ -49,10 +42,8 @@ export class Enemy {
     rows: number,
     cols: number
   ) {
-    this.id = uuidv4();
-
     const randomSize = random(99, 1);
-    this.radius =
+    const radius =
       randomSize < 34
         ? EnemySizes.SMALL
         : randomSize < 67
@@ -64,15 +55,17 @@ export class Enemy {
     const cellWidth = width / cols;
     const cellHeight = height / rows;
 
-    this.position = {
+    const position = {
       x: col * cellWidth - cellWidth / 2,
       y: row * cellHeight - cellHeight / 2,
     };
 
-    this.angle = Math.atan2(
-      random(height, this.radius) - this.position.y || 1,
-      random(width, this.radius) - this.position.x || 1
+    const angle = Math.atan2(
+      random(height, radius) - position.y || 1,
+      random(width, radius) - position.x || 1
     );
+
+    super(uuidv4(), position, radius, 80, angle);
 
     this.velocity = {
       x: Math.cos(this.angle) * this.speed,
@@ -150,11 +143,6 @@ export class Enemy {
     this.speed = Math.hypot(this.velocity.x, this.velocity.y);
   }
 
-  updateVelocity() {
-    this.velocity.x = Math.cos(this.angle) * this.speed;
-    this.velocity.y = Math.sin(this.angle) * this.speed;
-  }
-
   updateEnemyState(deltaTime: number, isStarted: boolean) {
     if (!isStarted || this.isKiller) return;
     this.updateAngle();
@@ -162,26 +150,6 @@ export class Enemy {
     this.deceleration();
     this.updateVelocity();
     this.updatePosition(deltaTime);
-  }
-
-  wallsCollisionHandler(width: number, height: number) {
-    const restitution = 1.2; // coefficient changing speed by bouncing of the wall, 1 = not changing
-
-    if (this.position.x < this.radius) {
-      this.velocity.x = Math.abs(this.velocity.x) * restitution;
-      this.position.x = this.radius;
-    } else if (this.position.x > width - this.radius) {
-      this.velocity.x = -Math.abs(this.velocity.x) * restitution;
-      this.position.x = width - this.radius;
-    }
-
-    if (this.position.y < this.radius) {
-      this.velocity.y = Math.abs(this.velocity.y) * restitution;
-      this.position.y = this.radius;
-    } else if (this.position.y > height - this.radius) {
-      this.velocity.y = -Math.abs(this.velocity.y) * restitution;
-      this.position.y = height - this.radius;
-    }
   }
 
   handleCollisionCircleToRect(r: Rect) {
@@ -246,21 +214,5 @@ export class Enemy {
       enemy.Velocity.x + impulse * this.mass * vCollisionNorm.x;
     enemy.Velocity.y =
       enemy.Velocity.y + impulse * this.mass * vCollisionNorm.y;
-  }
-
-  get Position(): Point {
-    return this.position;
-  }
-
-  set Position(position: Point) {
-    this.position = position;
-  }
-
-  get Velocity(): Point {
-    return this.velocity;
-  }
-
-  set Velocity(velocity: Point) {
-    this.velocity = velocity;
   }
 }

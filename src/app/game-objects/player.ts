@@ -5,21 +5,15 @@ import { radiansToDegrees } from '../utils/radiansToDegrees';
 import { Sprite } from './sprite';
 
 import playerImageUrl from 'src/assets/images/player/player1.png';
+import { Circle } from './circle';
 
 export type Point = { x: number; y: number };
 
-export class Player {
-  readonly id: string;
-
+export class Player extends Circle {
   readonly playerImage = new Sprite(playerImageUrl);
 
-  protected position: Point = { x: 0, y: 0 };
   protected destination: Point = { x: 0, y: 0 };
-  protected velocity: Point = { x: 0, y: 0 };
 
-  readonly radius = 25;
-  protected angle = 0; // angle in radians
-  protected speed = 70;
   protected distanceToDestination = 0;
 
   constructor(
@@ -28,9 +22,7 @@ export class Player {
     width: number,
     height: number
   ) {
-    this.id = 'temp_id_player_765';
-    this.position.x = width / 2;
-    this.position.y = height / 2;
+    super('temp_id_player_765', { x: width / 2, y: height / 2 });
     this.destination.x = width / 2;
     this.destination.y = height / 2;
   }
@@ -90,24 +82,11 @@ export class Player {
     );
   }
 
-  updateVelocity() {
-    this.velocity.x = Math.cos(this.angle) * this.speed;
-    this.velocity.y = Math.sin(this.angle) * this.speed;
-  }
-
   updatePlayerState(deltaTime: number) {
     this.updateAngle();
     this.updateDistanceToDestination();
     this.updateVelocity();
     this.updatePosition(deltaTime);
-  }
-
-  get Position(): Point {
-    return this.position;
-  }
-
-  set Position(position: Point) {
-    this.position = position;
   }
 
   get Destination(): Point {

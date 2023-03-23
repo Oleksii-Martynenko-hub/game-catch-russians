@@ -103,7 +103,10 @@ const Canvas: FC<CanvasProps> = (props) => {
         head.drawHeadquarters();
       });
 
-      if (!world.isGameOver) player.updatePlayerState(world.deltaTime);
+      if (!world.isGameOver) {
+        player.updatePlayerState(world.deltaTime);
+        player.wallsCollisionHandler(world.width, world.height);
+      }
       player.drawPlayer();
     }
     requestAnimationFrame(anim);
